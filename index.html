@@ -288,10 +288,11 @@
 
         // ==========================================
         // 👥 THE PLAYER DATABASE 
-        // Paste your copied backup data inside these brackets [ ]
         // ==========================================
         const defaultPlayerData = [
-        {"name":"Swixzn","mode":"Vanilla","tier":"lt5"},{"name":"Vyxzn","mode":"Vanilla","tier":"lt5"},{"name":"TheclownIsFree","mode":"Vanilla","tier":"lt5"},{"name":"Shxdowwed","mode":"Vanilla","tier":"lt5"},{"name":"Me_israph717","mode":"Vanilla","tier":"lt5"}
+            {"name":"vyxzn","mode":"Vanilla","tier":"lt5"},
+            {"name":"theclownisfree","mode":"Vanilla","tier":"lt5"},
+            {"name":"theclownisfree","mode":"UHC","tier":"ht1"}
         ];
 
         // ==========================================
@@ -352,7 +353,7 @@
                 document.getElementById("login-btn").style.display = "none";
                 
                 const localRecords = localStorage.getItem("liaf_tiers_db");
-                if (localRecords) playerData = JSON.parse(localRecords);
+                playerData = localRecords ? JSON.parse(localRecords) : defaultPlayerData;
                 
                 renderRoster();
             } else if (entry !== null) {
@@ -363,6 +364,7 @@
         function logoutAdmin() {
             isAdminLoggedIn = false;
             sessionStorage.removeItem("liaf_admin_active");
+            localStorage.removeItem("liaf_tiers_db"); // Clear out admin edits cache on formal logout
             document.getElementById("admin-panel").style.display = "none";
             document.getElementById("login-btn").style.display = "block";
             playerData = defaultPlayerData;
