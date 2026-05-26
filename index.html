@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liaf Tiers | Official Player Rankings</title>
+    <style>
+        :root {
+            --bg-dark: #0f1115;
+            --bg-card: #151821;
+            --bg-nav: #1b1e29;
+            --text-main: #ffffff;
+            --text-muted: #6b7280;
+            --accent: #5865F2;
+            --success: #10b981;
+            --danger: #ef4444;
+            
+            /* Tier Brand Colors matching screenshot */
+            --color-t1: #fbbf24; /* Gold/Yellow for Tier 1 */
+            --color-t2: #93c5fd; /* Soft Blue for Tier 2 */
+            --color-t3: #f97316; /* Orange for Tier 3 */
+            --color-t4: #38bdf8; /* Cyan for Tier 4 */
+            --color-t5: #a855f7; /* Purple for Tier 5 */
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+        }
+
+        header {
+            background-color: var(--bg-nav);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #242936;
+            position: relative;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: 2px;
+        }
+
+        header h1 span {
+            color: var(--accent);
+        }
+
+        .admin-login-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .admin-login-btn:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        .admin-bar {
+            background-color: #1e1b4b;
+            border-bottom: 1px solid var(--accent);
+            padding: 10px 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary { background-color: var(--accent); color: white; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+
+        .controls-container {
+            max-width: 1400px;
+            margin: 30px auto 15px auto;
+            padding: 0 20px;
+        }
+
+        .search-bar {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px 20px;
+            border-radius: 8px;
+            border: 1px solid #242936;
+            background-color: var(--bg-card);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-bar:focus {
+            outline: 2px solid var(--accent);
+        }
+
+        .tabs-container {
+            max-width: 1400px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background-color: var(--bg-card);
+            color: #9ca3af;
+            border: 1px solid #242936;
+            padding: 12px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .leaderboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px 50px 20px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 1100px;
+        }
+
+        .roster-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 1100px;
+        }
+
+        .player-row {
+            background-color: var(--bg-card);
+            border: 1px solid #1e2330;
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .col-rank { width: 50px; flex-shrink: 0; }
+        .col-player { flex-grow: 1; display: flex; align-items: center; }
+        .col-badges { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-left: 20px; }
+        .col-actions { width: 80px; text-align: right; flex-shrink: 0; display: none; }
+
+        .rank-number { font-size: 1.2rem; font-weight: 800; color: var(--text-muted); }
+        .avatar { width: 44px; height: 44px; border-radius: 6px; background-color: #242936; image-rendering: pixelated; margin-right: 20px; }
+        .player-name { font-size: 1.15rem; font-weight: bold; }
+        .points-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+        
+        .tier-slot { width: 90px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .header-slot { width: 90px; text-align: center; flex-shrink: 0; }
+
+        .mctiers-pill-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 0;
+            border-radius: 6px;
+            line-height: 1;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid transparent;
+        }
+
+        .pill-ht1 { color: var(--color-t1); background-color: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.2); }
+        .pill-lt1 { color: var(--color-t1); background-color: rgba(251, 191, 36, 0.05); border-color: rgba(251, 191, 36, 0.1); opacity: 0.85; }
+        .pill-ht2 { color: var(--color-t2); background-color: rgba(147, 197, 253, 0.12); border-color: rgba(147, 197, 253, 0.2); }
+        .pill-lt2 { color: var(--color-t2); background-color: rgba(147, 197, 253, 0.05); border-color: rgba(147, 197, 253, 0.1); opacity: 0.85; }
+        .pill-ht3 { color: var(--color-t3); background-color: rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.2); }
+        .pill-lt3 { color: var(--color-t3); background-color: rgba(249, 115, 22, 0.06); border-color: rgba(249, 115, 22, 0.1); opacity: 0.85; }
+        .pill-ht4 { color: var(--color-t4); background-color: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.2); }
+        .pill-lt4 { color: var(--color-t4); background-color: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.1); opacity: 0.85; }
+        .pill-ht5 { color: var(--color-t5); background-color: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.2); }
+        .pill-lt5 { color: var(--color-t5); background-color: rgba(168, 85, 247, 0.05); border-color: rgba(168, 85, 247, 0.1); opacity: 0.85; }
+
+        .badge-placeholder { width: 100%; height: 2px; background-color: #242936; border-radius: 2px; opacity: 0.3; }
+
+        /* Editing Interactive Inputs Styles */
+        .admin-select {
+            background-color: #1b1e29;
+            color: white;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 0.75rem;
+            width: 100%;
+            text-align: center;
+        }
+        .admin-input {
+            background-color: #1b1e29;
+            color: white;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 0.9rem;
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>LIAF <span>TIERS</span></h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0; font-size: 0.9rem;">Official Leaderboard & Rank Systems</p>
+        <button class="admin-login-btn" id="login-btn" onclick="toggleAdminLogin()">Owner Login</button>
+    </header>
+
+    <div class="admin-bar" id="admin-panel">
+        <span style="font-weight: bold; color: var(--color-t1);">⚡ Owner Editing Mode Active</span>
+        <div class="admin-actions">
+            <button class="btn btn-primary" onclick="addNewPlayerPrompt()">+ Add Player</button>
+            <button class="btn btn-success" onclick="exportBackupData()">Copy Backup Data</button>
+            <button class="btn btn-danger" onclick="logoutAdmin()">Logout</button>
+        </div>
+    </div>
+
+    <div class="controls-container">
+        <input type="text" id="search" class="search-bar" placeholder="Search player name...">
+    </div>
+
+    <div class="tabs-container" id="tabs">
+        <button class="tab-btn active" onclick="switchMode('Overall')">Overall</button>
+        <button class="tab-btn" onclick="switchMode('Vanilla')">Vanilla</button>
+        <button class="tab-btn" onclick="switchMode('UHC')">UHC</button>
+        <button class="tab-btn" onclick="switchMode('Pot')">Pot</button>
+        <button class="tab-btn" onclick="switchMode('NethOP')">NethOP</button>
+        <button class="tab-btn" onclick="switchMode('SMP')">SMP</button>
+        <button class="tab-btn" onclick="switchMode('Diamond SMP')">Diamond SMP</button>
+        <button class="tab-btn" onclick="switchMode('Sword')">Sword</button>
+        <button class="tab-btn" onclick="switchMode('Axe')">Axe</button>
+        <button class="tab-btn" onclick="switchMode('Mace')">Mace</button>
+        <button class="tab-btn" onclick="switchMode('Cart')">Cart</button>
+    </div>
+
+    <div class="leaderboard-container">
+        <div class="table-header" id="table-header-row">
+            </div>
+
+        <main class="roster-list" id="roster">
+            </main>
+    </div>
+
+    <script>
+        // Default seed data to load if your local storage database is blank
+        const defaultPlayerData = [
+           
+        ];
+
+        const tierWeights = {
+            "none": 0, "ht1": 10, "lt1": 9, "ht2": 8, "lt2": 7, "ht3": 6,
+            "lt3": 5, "ht4": 4, "lt4": 3, "ht5": 2, "lt5": 1
+        };
+
+        const orderedModes = ["Vanilla", "UHC", "Pot", "NethOP", "SMP", "Diamond SMP", "Sword", "Axe", "Mace", "Cart"];
+
+        let playerData = [];
+        let currentMode = "Overall";
+        let isAdminLoggedIn = false;
+
+        // Load data from LocalStorage DB or fallback to default dataset
+        function initDatabase() {
+            const localRecords = localStorage.getItem("liaf_tiers_db");
+            if (localRecords) {
+                playerData = JSON.parse(localRecords);
+            } else {
+                playerData = defaultPlayerData;
+                localStorage.setItem("liaf_tiers_db", JSON.stringify(playerData));
+            }
+        }
+
+        function saveDatabase() {
+            localStorage.setItem("liaf_tiers_db", JSON.stringify(playerData));
+        }
+
+        function getOverallLeaderboard() {
+            const summary = {};
+
+            playerData.forEach(p => {
+                if (!summary[p.name]) {
+                    summary[p.name] = { totalPoints: 0, kits: {} };
+                }
+                summary[p.name].totalPoints += (tierWeights[p.tier] || 0);
+                summary[p.name].kits[p.mode] = p.tier;
+            });
+
+            return Object.keys(summary).map(name => ({
+                name: name,
+                totalPoints: summary[name].totalPoints,
+                kits: summary[name].kits
+            })).sort((a, b) => b.totalPoints - a.totalPoints);
+        }
+
+        function toggleAdminLogin() {
+            if (isAdminLoggedIn) return;
+            
+            // Set your custom password right here!
+            const securePass = "liafadmin123"; 
+            const entry = prompt("Enter Owner Admin Password:");
+            
+            if (entry === securePass) {
+                isAdminLoggedIn = true;
+                document.getElementById("admin-panel").style.display = "flex";
+                document.getElementById("login-btn").style.display = "none";
+                renderRoster();
+            } else if (entry !== null) {
+                alert("Incorrect password choice.");
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            document.getElementById("admin-panel").style.display = "none";
+            document.getElementById("login-btn").style.display = "block";
+            renderRoster();
+        }
+
+        function renderHeader() {
+            const headerRow = document.getElementById("table-header-row");
+            let html = `
+                <div class="col-rank">Rank</div>
+                <div class="col-player">Player</div>
+                <div class="col-badges">
+            `;
+
+            if (currentMode === "Overall") {
+                orderedModes.forEach(mode => {
+                    html += `<div class="header-slot">${mode}</div>`;
+                });
+            } else {
+                html += `<div class="header-slot">${currentMode}</div>`;
+            }
+
+            html += `</div>`;
+            
+            // Show action header column if editing is enabled
+            html += `<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">Manage</div>`;
+            headerRow.innerHTML = html;
+        }
+
+        function updateTierSelection(username, modeName, selectElement) {
+            const targetTier = selectElement.value;
+            
+            // Remove existing index matching this specific player/mode pair
+            playerData = playerData.filter(p => !(p.name.toLowerCase() === username.toLowerCase() && p.mode === modeName));
+            
+            if (targetTier !== "none") {
+                playerData.push({ name: username, mode: modeName, tier: targetTier });
+            }
+            
+            saveDatabase();
+            
+            // If editing inside an active sorting view, we don't force re-render instantly to avoid focus loss
+            if (currentMode !== "Overall") {
+                // Instantly re-calculates score values inside layout silently without closing view
+                getOverallLeaderboard(); 
+            }
+        }
+
+        function changePlayerName(oldName, inputField) {
+            const newName = inputField.value.trim();
+            if (!newName || newName === oldName) return;
+
+            playerData.forEach(p => {
+                if (p.name.toLowerCase() === oldName.toLowerCase()) {
+                    p.name = newName;
+                }
+            });
+            saveDatabase();
+        }
+
+        function removePlayerEntirely(username) {
+            if (confirm(`Are you sure you want to completely remove ${username} from all records?`)) {
+                playerData = playerData.filter(p => p.name.toLowerCase() !== username.toLowerCase());
+                saveDatabase();
+                renderRoster();
+            }
+        }
+
+        function addNewPlayerPrompt() {
+            const newPlayer = prompt("Enter new Minecraft Username:");
+            if (!newPlayer || newPlayer.trim() === "") return;
+            
+            const cleanName = newPlayer.trim();
+            // Default check to avoid duplication errors
+            const exists = playerData.some(p => p.name.toLowerCase() === cleanName.toLowerCase());
+            if (exists) {
+                alert("This player already has tier records tracked.");
+                return;
+            }
+
+            // Give them a starter placement so they populate visually
+            playerData.push({ name: cleanName, mode: "Vanilla", tier: "lt5" });
+            saveDatabase();
+            renderRoster();
+        }
+
+        function generateSelectorHTML(username, mode, currentTier) {
+            let selectHTML = `<select class="admin-select" onchange="updateTierSelection('${username}', '${mode}', this)">`;
+            const options = ["none", "ht1", "lt1", "ht2", "lt2", "ht3", "lt3", "ht4", "lt4", "ht5", "lt5"];
+            
+            options.forEach(opt => {
+                const selected = opt === currentTier ? "selected" : "";
+                selectHTML += `<option value="${opt}" ${selected}>${opt === 'none' ? '-' : opt.toUpperCase()}</option>`;
+            });
+            selectHTML += `</select>`;
+            return selectHTML;
+        }
+
+        function exportBackupData() {
+            const outputText = JSON.stringify(playerData);
+            navigator.clipboard.writeText(outputText).then(() => {
+                alert("All player database text has been successfully copied directly to your clipboard as a safe backup configuration!");
+            });
+        }
+
+        function renderRoster() {
+            const rosterContainer = document.getElementById("roster");
+            const searchQuery = document.getElementById("search").value.toLowerCase();
+            rosterContainer.innerHTML = "";
+            renderHeader();
+
+            if (currentMode === "Overall") {
+                const overallData = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
+
+                if (overallData.length === 0) {
+                    rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No players found.</p>`;
+                    return;
+                }
+
+                overallData.forEach((player, index) => {
+                    const row = document.createElement("div");
+                    row.className = "player-row";
+                    
+                    let badgesHTML = '<div class="col-badges">';
+                    orderedModes.forEach(mode => {
+                        const tier = player.kits[mode] || "none";
+                        
+                        if (isAdminLoggedIn) {
+                            badgesHTML += `<div class="tier-slot">${generateSelectorHTML(player.name, mode, tier)}</div>`;
+                        } else {
+                            if (tier !== "none") {
+                                badgesHTML += `
+                                    <div class="tier-slot">
+                                        <div class="mctiers-pill-label pill-${tier}">${tier}</div>
+                                    </div>
+                                `;
+                            } else {
+                                badgesHTML += `
+                                    <div class="tier-slot">
+                                        <div class="badge-placeholder"></div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    });
+                    badgesHTML += '</div>';
+
+                    const nameDisplayHTML = isAdminLoggedIn 
+                        ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">`
+                        : `<div class="player-name">${player.name}</div>`;
+
+                    row.innerHTML = `
+                        <div class="col-rank rank-number">#${index + 1}</div>
+                        <div class="col-player">
+                            <img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" alt="${player.name}" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'">
+                            <div class="player-info">
+                                ${nameDisplayHTML}
+                                <div class="points-sub">Total Score: ${player.totalPoints} pts</div>
+                            </div>
+                        </div>
+                        ${badgesHTML}
+                        <div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button>
+                        </div>
+                    `;
+                    rosterContainer.appendChild(row);
+                });
+            } else {
+                // Singular Kit Category View Filter Options
+                const filteredPlayers = playerData.filter(player => {
+                    return player.mode === currentMode && player.name.toLowerCase().includes(searchQuery);
+                }).sort((a, b) => (tierWeights[b.tier] || 0) - (tierWeights[a.tier] || 0));
+
+                if (filteredPlayers.length === 0) {
+                    rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No ranked players found in this mode.</p>`;
+                    return;
+                }
+
+                filteredPlayers.forEach((player, index) => {
+                    const pts = tierWeights[player.tier] || 0;
+                    const row = document.createElement("div");
+                    row.className = "player-row";
+                    
+                    const cellContent = isAdminLoggedIn 
+                        ? generateSelectorHTML(player.name, currentMode, player.tier)
+                        : `<div class="mctiers-pill-label pill-${player.tier}">${player.tier}</div>`;
+
+                    const nameDisplayHTML = isAdminLoggedIn 
+                        ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">`
+                        : `<div class="player-name">${player.name}</div>`;
+
+                    row.innerHTML = `
+                        <div class="col-rank rank-number">#${index + 1}</div>
+                        <div class="col-player">
+                            <img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" alt="${player.name}" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'">
+                            <div class="player-info">
+                                ${nameDisplayHTML}
+                                <div class="points-sub">Score: ${pts} pts</div>
+                            </div>
+                        </div>
+                        <div class="col-badges">
+                            <div class="tier-slot">${cellContent}</div>
+                        </div>
+                        <div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button>
+                        </div>
+                    `;
+                    rosterContainer.appendChild(row);
+                });
+            }
+        }
+
+        function switchMode(modeName) {
+            currentMode = modeName;
+            
+            const buttons = document.querySelectorAll(".tab-btn");
+            buttons.forEach(btn => {
+                btn.classList.toggle("active", btn.textContent.trim().toLowerCase() === modeName.toLowerCase());
+            });
+
+            renderRoster();
+        }
+
+        document.getElementById("search").addEventListener("input", renderRoster);
+        
+        // Initialize Application
+        initDatabase();
+        renderRoster();
+    </script>
+</body>
+</html>
