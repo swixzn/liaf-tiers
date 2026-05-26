@@ -327,11 +327,14 @@
 
         function getOverallLeaderboard() {
             const summary = {};
+            
+            // First collect all distinct names present in the database tracking arrays
             playerData.forEach(p => {
                 if (!summary[p.name]) summary[p.name] = { totalPoints: 0, kits: {} };
                 summary[p.name].totalPoints += (tierWeights[p.tier] || 0);
                 summary[p.name].kits[p.mode] = p.tier;
             });
+            
             return Object.keys(summary).map(name => ({
                 name: name,
                 totalPoints: summary[name].totalPoints,
@@ -360,7 +363,7 @@
         function logoutAdmin() {
             isAdminLoggedIn = false;
             sessionStorage.removeItem("liaf_admin_active");
-            localStorage.removeItem("liaf_tiers_db"); // Clear out admin edits cache on formal logout
+            localStorage.removeItem("liaf_tiers_db");
             document.getElementById("admin-panel").style.display = "none";
             document.getElementById("login-btn").style.display = "block";
             playerData = defaultPlayerData;
@@ -381,8 +384,17 @@
 
         function updateTierSelection(username, modeName, selectElement) {
             const targetTier = selectElement.value;
-            playerData = playerData.filter(p => !(p.name.toLowerCase() === username.toLowerCase() && p.mode === modeName));
-            if (targetTier !== "none") playerData.push({ name: username, mode: modeName, tier: targetTier });
+            
+            // Look for existing entry
+            const foundIndex = playerData.findIndex(p => p.name.toLowerCase() === username.toLowerCase() && p.mode === modeName);
+            
+            if (foundIndex !== -1) {
+                // Keep the record structure intact, just assign the tier to 'none' or new selections
+                playerData[foundIndex].tier = targetTier;
+            } else {
+                playerData.push({ name: username, mode: modeName, tier: targetTier });
+            }
+            
             saveDatabase();
             if (currentMode !== "Overall") getOverallLeaderboard();
         }
@@ -410,7 +422,8 @@
                 alert("This player already has tier records tracked.");
                 return;
             }
-            playerData.push({ name: cleanName, mode: "Vanilla", tier: "lt5" });
+            // Set initial value to 'none' blank, so you can manually map kits out without crashing
+            playerData.push({ name: cleanName, mode: "Vanilla", tier: "none" });
             saveDatabase();
             renderRoster();
         }
@@ -466,18 +479,34 @@
                     rosterContainer.appendChild(row);
                 });
             } else {
-                const filteredPlayers = playerData.filter(player => player.mode === currentMode && player.name.toLowerCase().includes(searchQuery)).sort((a, b) => (tierWeights[b.tier] || 0) - (tierWeights[a.tier] || 0));
+                // To track items set to 'none' in specific kit views, we cross reference the global list
+                const distinctPlayers = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
+                
+                // Map out how they rank inside this specific isolated kit view
+                const filteredPlayers = distinctPlayers.map(p => {
+                    const trackingRecord = playerData.find(record => record.name.toLowerCase() === p.name.toLowerCase() && record.mode === currentMode);
+                    return {
+                        name: p.name,
+                        tier: trackingRecord ? trackingRecord.tier : "none"
+                    };
+                }).sort((a, b) => (tierWeights[b.tier] || 0) - (tierWeights[a.tier] || 0));
+
                 if (filteredPlayers.length === 0) {
-                    rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No ranked players found in this mode.</p>`;
+                    rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No ranked players found.</p>`;
                     return;
                 }
+                
                 filteredPlayers.forEach((player, index) => {
                     const pts = tierWeights[player.tier] || 0;
                     const row = document.createElement("div");
                     row.className = "player-row";
                     const cellContent = isAdminLoggedIn ? generateSelectorHTML(player.name, currentMode, player.tier) : `<div class="mctiers-pill-label pill-${player.tier}">${player.tier}</div>`;
                     const nameDisplayHTML = isAdminLoggedIn ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">` : `<div class="player-name">${player.name}</div>`;
-                    row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Score: ${pts} pts</div></div></div><div class="col-badges"><div class="tier-slot">${cellContent}</div></div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
+                    
+                    // If not admin and tier is none, show placeholder line
+                    const displayCell = (player.tier === "none" && !isAdminLoggedIn) ? `<div class="badge-placeholder"></div>` : cellContent;
+
+                    row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Score: ${pts} pts</div></div></div><div class="col-badges"><div class="tier-slot">${displayCell}</div></div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
                     rosterContainer.appendChild(row);
                 });
             }
