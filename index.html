@@ -22,14 +22,18 @@
             --color-t5: #a855f7;
         }
 
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
+            height: 100%;
             font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
+        }
+
+        body {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
         }
 
         header {
@@ -38,6 +42,7 @@
             text-align: center;
             border-bottom: 1px solid #242936;
             position: relative;
+            flex-shrink: 0;
         }
 
         header h1 {
@@ -79,6 +84,7 @@
             margin: 0 auto;
             box-sizing: border-box;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .admin-actions {
@@ -98,6 +104,14 @@
         .btn-primary { background-color: var(--accent); color: white; }
         .btn-success { background-color: var(--success); color: white; }
         .btn-danger { background-color: var(--danger); color: white; }
+
+        /* Scrollable main wrapper to keep footer at the bottom */
+        .main-content {
+            flex: 1 0 auto;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
 
         .controls-container {
             max-width: 1400px;
@@ -159,7 +173,6 @@
             overflow-x: auto;
             width: 100%;
             box-sizing: border-box;
-            flex-grow: 1;
         }
 
         .table-header {
@@ -171,7 +184,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            min-width: 1200px; /* Expanded slightly to ensure high zoom labels fit safely */
+            min-width: 1200px;
         }
 
         .roster-list {
@@ -192,7 +205,7 @@
         }
 
         .col-rank { width: 50px; flex-shrink: 0; }
-        .col-player { width: 220px; flex-shrink: 0; display: flex; align-items: center; } /* Locked standard width so it never wraps oddly */
+        .col-player { width: 220px; flex-shrink: 0; display: flex; align-items: center; }
         .col-badges { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
         .col-actions { width: 80px; text-align: right; flex-shrink: 0; display: none; margin-left: auto; }
 
@@ -254,11 +267,13 @@
         footer {
             background-color: var(--bg-nav);
             border-top: 1px solid #242936;
-            padding: 15px 20px;
+            padding: 20px;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: auto;
+            flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         footer .footer-content {
@@ -274,9 +289,10 @@
         footer .version {
             background: rgba(88, 101, 242, 0.1);
             color: var(--accent);
-            padding: 2px 8px;
+            padding: 3px 10px;
             border-radius: 4px;
             font-weight: 600;
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -297,27 +313,29 @@
         </div>
     </div>
 
-    <div class="controls-container">
-        <input type="text" id="search" class="search-bar" placeholder="Search player name...">
-    </div>
+    <div class="main-content">
+        <div class="controls-container">
+            <input type="text" id="search" class="search-bar" placeholder="Search player name...">
+        </div>
 
-    <div class="tabs-container" id="tabs">
-        <button class="tab-btn active" onclick="switchMode('Overall')">Overall</button>
-        <button class="tab-btn" onclick="switchMode('Vanilla')">Vanilla</button>
-        <button class="tab-btn" onclick="switchMode('UHC')">UHC</button>
-        <button class="tab-btn" onclick="switchMode('Pot')">Pot</button>
-        <button class="tab-btn" onclick="switchMode('NethOP')">NethOP</button>
-        <button class="tab-btn" onclick="switchMode('SMP')">SMP</button>
-        <button class="tab-btn" onclick="switchMode('Diamond SMP')">Diamond SMP</button>
-        <button class="tab-btn" onclick="switchMode('Sword')">Sword</button>
-        <button class="tab-btn" onclick="switchMode('Axe')">Axe</button>
-        <button class="tab-btn" onclick="switchMode('Mace')">Mace</button>
-        <button class="tab-btn" onclick="switchMode('Cart')">Cart</button>
-    </div>
+        <div class="tabs-container" id="tabs">
+            <button class="tab-btn active" onclick="switchMode('Overall')">Overall</button>
+            <button class="tab-btn" onclick="switchMode('Vanilla')">Vanilla</button>
+            <button class="tab-btn" onclick="switchMode('UHC')">UHC</button>
+            <button class="tab-btn" onclick="switchMode('Pot')">Pot</button>
+            <button class="tab-btn" onclick="switchMode('NethOP')">NethOP</button>
+            <button class="tab-btn" onclick="switchMode('SMP')">SMP</button>
+            <button class="tab-btn" onclick="switchMode('Diamond SMP')">Diamond SMP</button>
+            <button class="tab-btn" onclick="switchMode('Sword')">Sword</button>
+            <button class="tab-btn" onclick="switchMode('Axe')">Axe</button>
+            <button class="tab-btn" onclick="switchMode('Mace')">Mace</button>
+            <button class="tab-btn" onclick="switchMode('Cart')">Cart</button>
+        </div>
 
-    <div class="leaderboard-container">
-        <div class="table-header" id="table-header-row"></div>
-        <main class="roster-list" id="roster"></main>
+        <div class="leaderboard-container">
+            <div class="table-header" id="table-header-row"></div>
+            <main class="roster-list" id="roster"></main>
+        </div>
     </div>
 
     <footer>
@@ -336,13 +354,7 @@
         // ==========================================
         // 👥 THE PLAYER DATABASE 
         // ==========================================
-        const defaultPlayerData = [{"name":"vyxzn","mode":"Vanilla","tier":"lt5"},
-                                   {"name":"me_israph717","mode":"Vanilla","tier":"lt5"},
-                                   {"name":"vyxzn","mode":"UHC","tier":"lt5"},
-                                   {"name":"Swixzn","mode":"Vanilla","tier":"ht3"},
-                                   {"name":"TheclownIsFree","mode":"Vanilla","tier":"ht1"},
-                                   {"name":"Shxdowwed","mode":"Vanilla","tier":"lt1"}];
-
+        const defaultPlayerData = [{"name":"Swixzn","mode":"Vanilla","tier":"lt5"},{"name":"Vyxzn","mode":"Vanilla","tier":"lt5"},{"name":"TheclownIsFree","mode":"Vanilla","tier":"lt5"},{"name":"Shxdowwed","mode":"Vanilla","tier":"lt5"},{"name":"Me_israph717","mode":"Vanilla","tier":"lt5"}];
         // ==========================================
         // SYSTEM CORE CODE (Don't touch below)
         // ==========================================
