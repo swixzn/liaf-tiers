@@ -27,6 +27,9 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         header {
@@ -75,6 +78,7 @@
             max-width: 1400px;
             margin: 0 auto;
             box-sizing: border-box;
+            width: 100%;
         }
 
         .admin-actions {
@@ -99,6 +103,8 @@
             max-width: 1400px;
             margin: 30px auto 15px auto;
             padding: 0 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .search-bar {
@@ -123,6 +129,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 10px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .tab-btn {
@@ -149,6 +157,9 @@
             margin: 0 auto;
             padding: 0 20px 50px 20px;
             overflow-x: auto;
+            width: 100%;
+            box-sizing: border-box;
+            flex-grow: 1;
         }
 
         .table-header {
@@ -160,14 +171,14 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            min-width: 1100px;
+            min-width: 1200px; /* Expanded slightly to ensure high zoom labels fit safely */
         }
 
         .roster-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            min-width: 1100px;
+            min-width: 1200px;
         }
 
         .player-row {
@@ -181,13 +192,14 @@
         }
 
         .col-rank { width: 50px; flex-shrink: 0; }
-        .col-player { flex-grow: 1; display: flex; align-items: center; }
-        .col-badges { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-left: 20px; }
-        .col-actions { width: 80px; text-align: right; flex-shrink: 0; display: none; }
+        .col-player { width: 220px; flex-shrink: 0; display: flex; align-items: center; } /* Locked standard width so it never wraps oddly */
+        .col-badges { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
+        .col-actions { width: 80px; text-align: right; flex-shrink: 0; display: none; margin-left: auto; }
 
         .rank-number { font-size: 1.2rem; font-weight: 800; color: var(--text-muted); }
         .avatar { width: 44px; height: 44px; border-radius: 6px; background-color: #242936; image-rendering: pixelated; margin-right: 20px; }
-        .player-name { font-size: 1.15rem; font-weight: bold; }
+        .player-info { min-width: 0; flex-grow: 1; }
+        .player-name { font-size: 1.15rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .points-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
         
         .tier-slot { width: 90px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
@@ -238,6 +250,34 @@
             font-size: 0.9rem;
             width: 150px;
         }
+
+        footer {
+            background-color: var(--bg-nav);
+            border-top: 1px solid #242936;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        footer .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        footer .version {
+            background: rgba(88, 101, 242, 0.1);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -280,6 +320,13 @@
         <main class="roster-list" id="roster"></main>
     </div>
 
+    <footer>
+        <div class="footer-content">
+            <div>&copy; 2026 Liaf Tiers. All rights reserved.</div>
+            <div>Version <span class="version">v1.2.0</span></div>
+        </div>
+    </footer>
+
     <script>
         // ==========================================
         // 🛠️ ADMIN SETTINGS & PASSWORD
@@ -289,7 +336,12 @@
         // ==========================================
         // 👥 THE PLAYER DATABASE 
         // ==========================================
-        const defaultPlayerData = [{"name":"vyxzn","mode":"Vanilla","tier":"lt5"},{"name":"me_israph717","mode":"Vanilla","tier":"lt5"},{"name":"vyxzn","mode":"UHC","tier":"lt5"},{"name":"Swixzn","mode":"Vanilla","tier":"ht3"},{"name":"TheclownIsFree","mode":"Vanilla","tier":"ht1"},{"name":"Shxdowwed","mode":"Vanilla","tier":"lt1"}];
+        const defaultPlayerData = [{"name":"vyxzn","mode":"Vanilla","tier":"lt5"},
+                                   {"name":"me_israph717","mode":"Vanilla","tier":"lt5"},
+                                   {"name":"vyxzn","mode":"UHC","tier":"lt5"},
+                                   {"name":"Swixzn","mode":"Vanilla","tier":"ht3"},
+                                   {"name":"TheclownIsFree","mode":"Vanilla","tier":"ht1"},
+                                   {"name":"Shxdowwed","mode":"Vanilla","tier":"lt1"}];
 
         // ==========================================
         // SYSTEM CORE CODE (Don't touch below)
@@ -327,8 +379,6 @@
 
         function getOverallLeaderboard() {
             const summary = {};
-            
-            // First collect all distinct names present in the database tracking arrays
             playerData.forEach(p => {
                 if (!summary[p.name]) summary[p.name] = { totalPoints: 0, kits: {} };
                 summary[p.name].totalPoints += (tierWeights[p.tier] || 0);
@@ -384,12 +434,9 @@
 
         function updateTierSelection(username, modeName, selectElement) {
             const targetTier = selectElement.value;
-            
-            // Look for existing entry
             const foundIndex = playerData.findIndex(p => p.name.toLowerCase() === username.toLowerCase() && p.mode === modeName);
             
             if (foundIndex !== -1) {
-                // Keep the record structure intact, just assign the tier to 'none' or new selections
                 playerData[foundIndex].tier = targetTier;
             } else {
                 playerData.push({ name: username, mode: modeName, tier: targetTier });
@@ -422,7 +469,6 @@
                 alert("This player already has tier records tracked.");
                 return;
             }
-            // Set initial value to 'none' blank, so you can manually map kits out without crashing
             playerData.push({ name: cleanName, mode: "Vanilla", tier: "none" });
             saveDatabase();
             renderRoster();
@@ -475,14 +521,12 @@
                         ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">`
                         : `<div class="player-name">${player.name}</div>`;
 
-                    row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Total Score: ${player.totalPoints} pts</div></div></div>${badgesHTML}<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
+                    row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Total: ${player.totalPoints} pts</div></div></div>${badgesHTML}<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
                     rosterContainer.appendChild(row);
                 });
             } else {
-                // To track items set to 'none' in specific kit views, we cross reference the global list
                 const distinctPlayers = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
                 
-                // Map out how they rank inside this specific isolated kit view
                 const filteredPlayers = distinctPlayers.map(p => {
                     const trackingRecord = playerData.find(record => record.name.toLowerCase() === p.name.toLowerCase() && record.mode === currentMode);
                     return {
@@ -503,7 +547,6 @@
                     const cellContent = isAdminLoggedIn ? generateSelectorHTML(player.name, currentMode, player.tier) : `<div class="mctiers-pill-label pill-${player.tier}">${player.tier}</div>`;
                     const nameDisplayHTML = isAdminLoggedIn ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">` : `<div class="player-name">${player.name}</div>`;
                     
-                    // If not admin and tier is none, show placeholder line
                     const displayCell = (player.tier === "none" && !isAdminLoggedIn) ? `<div class="badge-placeholder"></div>` : cellContent;
 
                     row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Score: ${pts} pts</div></div></div><div class="col-badges"><div class="tier-slot">${displayCell}</div></div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
