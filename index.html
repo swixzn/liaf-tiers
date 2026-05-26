@@ -15,12 +15,11 @@
             --success: #10b981;
             --danger: #ef4444;
             
-            /* Tier Brand Colors matching screenshot */
-            --color-t1: #fbbf24; /* Gold/Yellow for Tier 1 */
-            --color-t2: #93c5fd; /* Soft Blue for Tier 2 */
-            --color-t3: #f97316; /* Orange for Tier 3 */
-            --color-t4: #38bdf8; /* Cyan for Tier 4 */
-            --color-t5: #a855f7; /* Purple for Tier 5 */
+            --color-t1: #fbbf24;
+            --color-t2: #93c5fd;
+            --color-t3: #f97316;
+            --color-t4: #38bdf8;
+            --color-t5: #a855f7;
         }
 
         body {
@@ -220,7 +219,6 @@
 
         .badge-placeholder { width: 100%; height: 2px; background-color: #242936; border-radius: 2px; opacity: 0.3; }
 
-        /* Editing Interactive Inputs Styles */
         .admin-select {
             background-color: #1b1e29;
             color: white;
@@ -278,56 +276,91 @@
     </div>
 
     <div class="leaderboard-container">
-        <div class="table-header" id="table-header-row">
-            </div>
-
-        <main class="roster-list" id="roster">
-            </main>
+        <div class="table-header" id="table-header-row"></div>
+        <main class="roster-list" id="roster"></main>
     </div>
 
     <script>
-        // Default seed data to load if your local storage database is blank
+        // ==========================================
+        // 🛠️ ADMIN SETTINGS & PASSWORD
+        // ==========================================
+        const securePass = "liafadmin123"; 
+
+        // ==========================================
+        // 👥 THE PLAYER DATABASE 
+        // Paste your copied backup data inside these brackets [ ]
+        // ==========================================
         const defaultPlayerData = [
-           [{"name":"vyxzn","mode":"Vanilla","tier":"lt5"}]
+            { name: "LiafMaster", mode: "Vanilla", tier: "ht1" },
+            { name: "LiafMaster", mode: "UHC", tier: "ht1" },
+            { name: "LiafMaster", mode: "Pot", tier: "ht1" },
+            { name: "LiafMaster", mode: "NethOP", tier: "ht1" },
+            { name: "LiafMaster", mode: "SMP", tier: "ht1" },
+            { name: "LiafMaster", mode: "Diamond SMP", tier: "lt1" },
+            { name: "LiafMaster", mode: "Sword", tier: "ht3" },
+            { name: "LiafMaster", mode: "Mace", tier: "lt2" },
+            { name: "LiafMaster", mode: "Axe", tier: "lt2" },
+            { name: "LiafMaster", mode: "Cart", tier: "ht2" },
+            
+            { name: "VeloPvP", mode: "Sword", tier: "lt1" },
+            { name: "VeloPvP", mode: "SMP", tier: "lt4" },
+            { name: "VeloPvP", mode: "Diamond SMP", tier: "ht3" },
+            { name: "VeloPvP", mode: "Pot", tier: "ht2" },
+            { name: "VeloPvP", mode: "Mace", tier: "ht3" },
+            { name: "VeloPvP", mode: "Cart", tier: "lt1" },
+
+            { name: "Xenon", mode: "Vanilla", tier: "ht1" },
+            { name: "Xenon", mode: "Sword", tier: "ht2" },
+            { name: "Xenon", mode: "UHC", tier: "lt3" },
+            { name: "Xenon", mode: "Cart", tier: "ht4" },
+
+            { name: "AxeGod", mode: "Axe", tier: "ht1" },
+            { name: "AxeGod", mode: "NethOP", tier: "lt1" },
+            { name: "AxeGod", mode: "Sword", tier: "ht4" },
+            { name: "AxeGod", mode: "Diamond SMP", tier: "lt2" }
         ];
 
+        // ==========================================
+        // SYSTEM CORE CODE (Don't touch below)
+        // ==========================================
         const tierWeights = {
             "none": 0, "ht1": 10, "lt1": 9, "ht2": 8, "lt2": 7, "ht3": 6,
             "lt3": 5, "ht4": 4, "lt4": 3, "ht5": 2, "lt5": 1
         };
 
         const orderedModes = ["Vanilla", "UHC", "Pot", "NethOP", "SMP", "Diamond SMP", "Sword", "Axe", "Mace", "Cart"];
-
         let playerData = [];
         let currentMode = "Overall";
         let isAdminLoggedIn = false;
 
-        // Load data from LocalStorage DB or fallback to default dataset
         function initDatabase() {
-            const localRecords = localStorage.getItem("liaf_tiers_db");
-            if (localRecords) {
-                playerData = JSON.parse(localRecords);
+            const adminActive = sessionStorage.getItem("liaf_admin_active") === "true";
+            
+            if (adminActive) {
+                isAdminLoggedIn = true;
+                document.getElementById("admin-panel").style.display = "flex";
+                document.getElementById("login-btn").style.display = "none";
+                
+                const localRecords = localStorage.getItem("liaf_tiers_db");
+                playerData = localRecords ? JSON.parse(localRecords) : defaultPlayerData;
             } else {
                 playerData = defaultPlayerData;
-                localStorage.setItem("liaf_tiers_db", JSON.stringify(playerData));
             }
         }
 
         function saveDatabase() {
-            localStorage.setItem("liaf_tiers_db", JSON.stringify(playerData));
+            if (isAdminLoggedIn) {
+                localStorage.setItem("liaf_tiers_db", JSON.stringify(playerData));
+            }
         }
 
         function getOverallLeaderboard() {
             const summary = {};
-
             playerData.forEach(p => {
-                if (!summary[p.name]) {
-                    summary[p.name] = { totalPoints: 0, kits: {} };
-                }
+                if (!summary[p.name]) summary[p.name] = { totalPoints: 0, kits: {} };
                 summary[p.name].totalPoints += (tierWeights[p.tier] || 0);
                 summary[p.name].kits[p.mode] = p.tier;
             });
-
             return Object.keys(summary).map(name => ({
                 name: name,
                 totalPoints: summary[name].totalPoints,
@@ -337,15 +370,16 @@
 
         function toggleAdminLogin() {
             if (isAdminLoggedIn) return;
-            
-            // Set your custom password right here!
-            const securePass = "liafadmin123"; 
             const entry = prompt("Enter Owner Admin Password:");
-            
             if (entry === securePass) {
                 isAdminLoggedIn = true;
+                sessionStorage.setItem("liaf_admin_active", "true");
                 document.getElementById("admin-panel").style.display = "flex";
                 document.getElementById("login-btn").style.display = "none";
+                
+                const localRecords = localStorage.getItem("liaf_tiers_db");
+                if (localRecords) playerData = JSON.parse(localRecords);
+                
                 renderRoster();
             } else if (entry !== null) {
                 alert("Incorrect password choice.");
@@ -354,62 +388,37 @@
 
         function logoutAdmin() {
             isAdminLoggedIn = false;
+            sessionStorage.removeItem("liaf_admin_active");
             document.getElementById("admin-panel").style.display = "none";
             document.getElementById("login-btn").style.display = "block";
+            playerData = defaultPlayerData;
             renderRoster();
         }
 
         function renderHeader() {
             const headerRow = document.getElementById("table-header-row");
-            let html = `
-                <div class="col-rank">Rank</div>
-                <div class="col-player">Player</div>
-                <div class="col-badges">
-            `;
-
+            let html = `<div class="col-rank">Rank</div><div class="col-player">Player</div><div class="col-badges">`;
             if (currentMode === "Overall") {
-                orderedModes.forEach(mode => {
-                    html += `<div class="header-slot">${mode}</div>`;
-                });
+                orderedModes.forEach(mode => { html += `<div class="header-slot">${mode}</div>`; });
             } else {
                 html += `<div class="header-slot">${currentMode}</div>`;
             }
-
-            html += `</div>`;
-            
-            // Show action header column if editing is enabled
-            html += `<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">Manage</div>`;
+            html += `</div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">Manage</div>`;
             headerRow.innerHTML = html;
         }
 
         function updateTierSelection(username, modeName, selectElement) {
             const targetTier = selectElement.value;
-            
-            // Remove existing index matching this specific player/mode pair
             playerData = playerData.filter(p => !(p.name.toLowerCase() === username.toLowerCase() && p.mode === modeName));
-            
-            if (targetTier !== "none") {
-                playerData.push({ name: username, mode: modeName, tier: targetTier });
-            }
-            
+            if (targetTier !== "none") playerData.push({ name: username, mode: modeName, tier: targetTier });
             saveDatabase();
-            
-            // If editing inside an active sorting view, we don't force re-render instantly to avoid focus loss
-            if (currentMode !== "Overall") {
-                // Instantly re-calculates score values inside layout silently without closing view
-                getOverallLeaderboard(); 
-            }
+            if (currentMode !== "Overall") getOverallLeaderboard();
         }
 
         function changePlayerName(oldName, inputField) {
             const newName = inputField.value.trim();
             if (!newName || newName === oldName) return;
-
-            playerData.forEach(p => {
-                if (p.name.toLowerCase() === oldName.toLowerCase()) {
-                    p.name = newName;
-                }
-            });
+            playerData.forEach(p => { if (p.name.toLowerCase() === oldName.toLowerCase()) p.name = newName; });
             saveDatabase();
         }
 
@@ -424,16 +433,11 @@
         function addNewPlayerPrompt() {
             const newPlayer = prompt("Enter new Minecraft Username:");
             if (!newPlayer || newPlayer.trim() === "") return;
-            
             const cleanName = newPlayer.trim();
-            // Default check to avoid duplication errors
-            const exists = playerData.some(p => p.name.toLowerCase() === cleanName.toLowerCase());
-            if (exists) {
+            if (playerData.some(p => p.name.toLowerCase() === cleanName.toLowerCase())) {
                 alert("This player already has tier records tracked.");
                 return;
             }
-
-            // Give them a starter placement so they populate visually
             playerData.push({ name: cleanName, mode: "Vanilla", tier: "lt5" });
             saveDatabase();
             renderRoster();
@@ -442,18 +446,15 @@
         function generateSelectorHTML(username, mode, currentTier) {
             let selectHTML = `<select class="admin-select" onchange="updateTierSelection('${username}', '${mode}', this)">`;
             const options = ["none", "ht1", "lt1", "ht2", "lt2", "ht3", "lt3", "ht4", "lt4", "ht5", "lt5"];
-            
             options.forEach(opt => {
                 const selected = opt === currentTier ? "selected" : "";
                 selectHTML += `<option value="${opt}" ${selected}>${opt === 'none' ? '-' : opt.toUpperCase()}</option>`;
             });
-            selectHTML += `</select>`;
-            return selectHTML;
+            return selectHTML + `</select>`;
         }
 
         function exportBackupData() {
-            const outputText = JSON.stringify(playerData);
-            navigator.clipboard.writeText(outputText).then(() => {
+            navigator.clipboard.writeText(JSON.stringify(playerData)).then(() => {
                 alert("All player database text has been successfully copied directly to your clipboard as a safe backup configuration!");
             });
         }
@@ -466,100 +467,45 @@
 
             if (currentMode === "Overall") {
                 const overallData = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
-
                 if (overallData.length === 0) {
                     rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No players found.</p>`;
                     return;
                 }
-
                 overallData.forEach((player, index) => {
                     const row = document.createElement("div");
                     row.className = "player-row";
-                    
                     let badgesHTML = '<div class="col-badges">';
                     orderedModes.forEach(mode => {
                         const tier = player.kits[mode] || "none";
-                        
                         if (isAdminLoggedIn) {
                             badgesHTML += `<div class="tier-slot">${generateSelectorHTML(player.name, mode, tier)}</div>`;
                         } else {
-                            if (tier !== "none") {
-                                badgesHTML += `
-                                    <div class="tier-slot">
-                                        <div class="mctiers-pill-label pill-${tier}">${tier}</div>
-                                    </div>
-                                `;
-                            } else {
-                                badgesHTML += `
-                                    <div class="tier-slot">
-                                        <div class="badge-placeholder"></div>
-                                    </div>
-                                `;
-                            }
+                            badgesHTML += (tier !== "none") 
+                                ? `<div class="tier-slot"><div class="mctiers-pill-label pill-${tier}">${tier}</div></div>`
+                                : `<div class="tier-slot"><div class="badge-placeholder"></div></div>`;
                         }
                     });
                     badgesHTML += '</div>';
-
                     const nameDisplayHTML = isAdminLoggedIn 
                         ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">`
                         : `<div class="player-name">${player.name}</div>`;
 
-                    row.innerHTML = `
-                        <div class="col-rank rank-number">#${index + 1}</div>
-                        <div class="col-player">
-                            <img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" alt="${player.name}" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'">
-                            <div class="player-info">
-                                ${nameDisplayHTML}
-                                <div class="points-sub">Total Score: ${player.totalPoints} pts</div>
-                            </div>
-                        </div>
-                        ${badgesHTML}
-                        <div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">
-                            <button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button>
-                        </div>
-                    `;
+                    row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Total Score: ${player.totalPoints} pts</div></div></div>${badgesHTML}<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
                     rosterContainer.appendChild(row);
                 });
             } else {
-                // Singular Kit Category View Filter Options
-                const filteredPlayers = playerData.filter(player => {
-                    return player.mode === currentMode && player.name.toLowerCase().includes(searchQuery);
-                }).sort((a, b) => (tierWeights[b.tier] || 0) - (tierWeights[a.tier] || 0));
-
+                const filteredPlayers = playerData.filter(player => player.mode === currentMode && player.name.toLowerCase().includes(searchQuery)).sort((a, b) => (tierWeights[b.tier] || 0) - (tierWeights[a.tier] || 0));
                 if (filteredPlayers.length === 0) {
                     rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No ranked players found in this mode.</p>`;
                     return;
                 }
-
                 filteredPlayers.forEach((player, index) => {
                     const pts = tierWeights[player.tier] || 0;
                     const row = document.createElement("div");
                     row.className = "player-row";
-                    
-                    const cellContent = isAdminLoggedIn 
-                        ? generateSelectorHTML(player.name, currentMode, player.tier)
-                        : `<div class="mctiers-pill-label pill-${player.tier}">${player.tier}</div>`;
-
-                    const nameDisplayHTML = isAdminLoggedIn 
-                        ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">`
-                        : `<div class="player-name">${player.name}</div>`;
-
-                    row.innerHTML = `
-                        <div class="col-rank rank-number">#${index + 1}</div>
-                        <div class="col-player">
-                            <img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" alt="${player.name}" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'">
-                            <div class="player-info">
-                                ${nameDisplayHTML}
-                                <div class="points-sub">Score: ${pts} pts</div>
-                            </div>
-                        </div>
-                        <div class="col-badges">
-                            <div class="tier-slot">${cellContent}</div>
-                        </div>
-                        <div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">
-                            <button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button>
-                        </div>
-                    `;
+                    const cellContent = isAdminLoggedIn ? generateSelectorHTML(player.name, currentMode, player.tier) : `<div class="mctiers-pill-label pill-${player.tier}">${player.tier}</div>`;
+                    const nameDisplayHTML = isAdminLoggedIn ? `<input type="text" class="admin-input" value="${player.name}" onchange="changePlayerName('${player.name}', this)">` : `<div class="player-name">${player.name}</div>`;
+                    row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Score: ${pts} pts</div></div></div><div class="col-badges"><div class="tier-slot">${cellContent}</div></div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
                     rosterContainer.appendChild(row);
                 });
             }
@@ -567,18 +513,11 @@
 
         function switchMode(modeName) {
             currentMode = modeName;
-            
-            const buttons = document.querySelectorAll(".tab-btn");
-            buttons.forEach(btn => {
-                btn.classList.toggle("active", btn.textContent.trim().toLowerCase() === modeName.toLowerCase());
-            });
-
+            document.querySelectorAll(".tab-btn").forEach(btn => { btn.classList.toggle("active", btn.textContent.trim().toLowerCase() === modeName.toLowerCase()); });
             renderRoster();
         }
 
         document.getElementById("search").addEventListener("input", renderRoster);
-        
-        // Initialize Application
         initDatabase();
         renderRoster();
     </script>
