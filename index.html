@@ -22,7 +22,6 @@
             --color-t5: #a855f7;
         }
 
-        /* Standard body setup with a minimum height of the full screen */
         body {
             margin: 0;
             padding: 0;
@@ -154,7 +153,11 @@
             border-color: var(--accent);
         }
 
-        /* Allow natural expansion of the container */
+        .tab-btn.system-tab {
+            border: 1px dashed var(--accent);
+            background-color: rgba(88, 101, 242, 0.05);
+        }
+
         .leaderboard-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -162,7 +165,7 @@
             overflow-x: auto;
             width: 100%;
             box-sizing: border-box;
-            flex-grow: 1; /* Expands to push footer down */
+            flex-grow: 1;
         }
 
         .table-header {
@@ -207,6 +210,47 @@
         
         .tier-slot { width: 90px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .header-slot { width: 90px; text-align: center; flex-shrink: 0; }
+
+        .requirements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .req-card {
+            background-color: var(--bg-card);
+            border: 1px solid #1e2330;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .req-card-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: white;
+            border-bottom: 1px solid #242936;
+            padding-bottom: 8px;
+            margin: 0;
+        }
+
+        .req-format-badge {
+            background-color: rgba(88, 101, 242, 0.15);
+            color: #93c5fd;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
         .mctiers-pill-label {
             font-size: 0.75rem;
@@ -254,7 +298,6 @@
             width: 150px;
         }
 
-        /* margin-top: auto guarantees it locks to the absolute bottom of the page */
         footer {
             background-color: var(--bg-nav);
             border-top: 1px solid #242936;
@@ -303,7 +346,7 @@
         </div>
     </div>
 
-    <div class="controls-container">
+    <div class="controls-container" id="search-wrapper">
         <input type="text" id="search" class="search-bar" placeholder="Search player name...">
     </div>
 
@@ -319,17 +362,18 @@
         <button class="tab-btn" onclick="switchMode('Axe')">Axe</button>
         <button class="tab-btn" onclick="switchMode('Mace')">Mace</button>
         <button class="tab-btn" onclick="switchMode('Cart')">Cart</button>
+        <button class="tab-btn system-tab" onclick="switchMode('Test Rules')">⚔️ Test Rules</button>
     </div>
 
     <div class="leaderboard-container">
         <div class="table-header" id="table-header-row"></div>
-        <main class="roster-list" id="roster"></main>
+        <main id="roster-or-grid"></main>
     </div>
 
     <footer>
         <div class="footer-content">
             <div>&copy; 2026 Liaf Tiers. All rights reserved.</div>
-            <div>Version <span class="version">v1.2.0</span></div>
+            <div>Version <span class="version">v1.4.1</span></div>
         </div>
     </footer>
 
@@ -342,10 +386,19 @@
         // ==========================================
         // 👥 THE PLAYER DATABASE 
         // ==========================================
-        const defaultPlayerData = [{"name":"vyxzn","mode":"Vanilla","tier":"none"},{"name":"me_israph717","mode":"Vanilla","tier":"ht1"},{"name":"vyxzn","mode":"UHC","tier":"none"},{"name":"Swixzn","mode":"Vanilla","tier":"none"},{"name":"TheclownIsFree","mode":"Vanilla","tier":"none"},{"name":"Shxdowwed","mode":"Vanilla","tier":"none"},{"name":"cupkick08","mode":"Vanilla","tier":"none"},{"name":"cupkick08","mode":"UHC","tier":"none"},{"name":"TheclownIsFree","mode":"Mace","tier":"ht1"},{"name":"Shxdowwed","mode":"Sword","tier":"ht1"},{"name":"Swixzn","mode":"Pot","tier":"lt1"},{"name":"Swixzn","mode":"NethOP","tier":"ht1"},{"name":"Shxdowwed","mode":"Pot","tier":"ht1"},{"name":"Shxdowwed","mode":"UHC","tier":"none"},{"name":"Shxdowwed","mode":"Axe","tier":"ht1"},{"name":"Swixzn","mode":"Axe","tier":"lt1"},{"name":"Shxdowwed","mode":"Mace","tier":"lt1"},{"name":"Swixzn","mode":"Mace","tier":"ht2"},{"name":"Shxdowwed","mode":"SMP","tier":"ht1"},{"name":"Swixzn","mode":"SMP","tier":"ht2"},{"name":"me_israph717","mode":"SMP","tier":"lt1"},{"name":"Swixzn","mode":"Diamond SMP","tier":"lt1"},{"name":"me_israph717","mode":"Diamond SMP","tier":"ht1"},{"name":"me_israph717","mode":"Mace","tier":"lt2"},{"name":"Swixzn","mode":"UHC","tier":"lt1"},{"name":"me_israph717","mode":"UHC","tier":"ht1"},{"name":"bearify_","mode":"Vanilla","tier":"none"}];
+        const defaultPlayerData = [
+            {"name":"vyxzn","mode":"Vanilla","tier":"lt5"},
+            {"name":"theclownisfree","mode":"Vanilla","tier":"lt5"},
+            {"name":"theclownisfree","mode":"UHC","tier":"ht1"}
+        ];
 
         // ==========================================
-        // SYSTEM CORE CODE (Don't touch below)
+        // 📜 KIT TESTING MATCH SPECIFICATIONS (First to Format)
+        // ==========================================
+        const kitRulesData = [{"name":"vyxzn","mode":"Vanilla","tier":"none"},{"name":"me_israph717","mode":"Vanilla","tier":"ht1"},{"name":"vyxzn","mode":"UHC","tier":"none"},{"name":"Swixzn","mode":"Vanilla","tier":"none"},{"name":"TheclownIsFree","mode":"Vanilla","tier":"none"},{"name":"Shxdowwed","mode":"Vanilla","tier":"none"},{"name":"cupkick08","mode":"Vanilla","tier":"none"},{"name":"cupkick08","mode":"UHC","tier":"none"},{"name":"TheclownIsFree","mode":"Mace","tier":"ht1"},{"name":"Shxdowwed","mode":"Sword","tier":"ht1"},{"name":"Swixzn","mode":"Pot","tier":"lt1"},{"name":"Swixzn","mode":"NethOP","tier":"ht1"},{"name":"Shxdowwed","mode":"Pot","tier":"ht1"},{"name":"Shxdowwed","mode":"UHC","tier":"none"},{"name":"Shxdowwed","mode":"Axe","tier":"ht1"},{"name":"Swixzn","mode":"Axe","tier":"lt1"},{"name":"Shxdowwed","mode":"Mace","tier":"lt1"},{"name":"Swixzn","mode":"Mace","tier":"ht2"},{"name":"Shxdowwed","mode":"SMP","tier":"ht1"},{"name":"Swixzn","mode":"SMP","tier":"ht2"},{"name":"me_israph717","mode":"SMP","tier":"lt1"},{"name":"Swixzn","mode":"Diamond SMP","tier":"lt1"},{"name":"me_israph717","mode":"Diamond SMP","tier":"ht1"},{"name":"me_israph717","mode":"Mace","tier":"lt2"},{"name":"Swixzn","mode":"UHC","tier":"lt1"},{"name":"me_israph717","mode":"UHC","tier":"ht1"},{"name":"bearify_","mode":"Vanilla","tier":"none"}];
+
+        // ==========================================
+        // SYSTEM CORE CODE
         // ==========================================
         const tierWeights = {
             "none": 0, "ht1": 10, "lt1": 9, "ht2": 8, "lt2": 7, "ht3": 6,
@@ -359,12 +412,10 @@
 
         function initDatabase() {
             const adminActive = sessionStorage.getItem("liaf_admin_active") === "true";
-            
             if (adminActive) {
                 isAdminLoggedIn = true;
                 document.getElementById("admin-panel").style.display = "flex";
                 document.getElementById("login-btn").style.display = "none";
-                
                 const localRecords = localStorage.getItem("liaf_tiers_db");
                 playerData = localRecords ? JSON.parse(localRecords) : defaultPlayerData;
             } else {
@@ -401,10 +452,8 @@
                 sessionStorage.setItem("liaf_admin_active", "true");
                 document.getElementById("admin-panel").style.display = "flex";
                 document.getElementById("login-btn").style.display = "none";
-                
                 const localRecords = localStorage.getItem("liaf_tiers_db");
                 playerData = localRecords ? JSON.parse(localRecords) : defaultPlayerData;
-                
                 renderRoster();
             } else if (entry !== null) {
                 alert("Incorrect password choice.");
@@ -423,13 +472,24 @@
 
         function renderHeader() {
             const headerRow = document.getElementById("table-header-row");
-            let html = `<div class="col-rank">Rank</div><div class="col-player">Player</div><div class="col-badges">`;
-            if (currentMode === "Overall") {
-                orderedModes.forEach(mode => { html += `<div class="header-slot">${mode}</div>`; });
-            } else {
-                html += `<div class="header-slot">${currentMode}</div>`;
+            
+            if (currentMode === "Test Rules") {
+                headerRow.style.display = "none"; 
+                return;
             }
-            html += `</div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">Manage</div>`;
+            
+            headerRow.style.display = "flex";
+            let html = `<div class="col-rank">Rank</div><div class="col-player">Player</div>`;
+            
+            if (currentMode === "Overall") {
+                html += `<div class="col-badges">`;
+                orderedModes.forEach(mode => { html += `<div class="header-slot">${mode}</div>`; });
+                html += `</div>`;
+            } else {
+                html += `<div class="col-badges"><div class="header-slot">${currentMode}</div></div>`;
+            }
+            
+            html += `<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}">Manage</div>`;
             headerRow.innerHTML = html;
         }
 
@@ -444,7 +504,7 @@
             }
             
             saveDatabase();
-            if (currentMode !== "Overall") getOverallLeaderboard();
+            renderRoster();
         }
 
         function changePlayerName(oldName, inputField) {
@@ -492,18 +552,44 @@
         }
 
         function renderRoster() {
-            const rosterContainer = document.getElementById("roster");
+            const contentContainer = document.getElementById("roster-or-grid");
             const searchQuery = document.getElementById("search").value.toLowerCase();
-            rosterContainer.innerHTML = "";
+            contentContainer.innerHTML = "";
             renderHeader();
 
+            if (currentMode === "Test Rules") {
+                document.getElementById("search-wrapper").style.display = "none"; 
+                
+                const gridElement = document.createElement("div");
+                gridElement.className = "requirements-grid";
+                
+                kitRulesData.forEach(kit => {
+                    gridElement.innerHTML += `
+                        <div class="req-card">
+                            <h3 class="req-card-title">${kit.mode}</h3>
+                            <div><span class="req-format-badge">${kit.format}</span></div>
+                        </div>`;
+                });
+                
+                contentContainer.appendChild(gridElement);
+                return;
+            }
+
+            document.getElementById("search-wrapper").style.display = "block";
+            
+            const baseList = document.createElement("div");
+            baseList.className = "roster-list";
+            contentContainer.appendChild(baseList);
+
+            const baseRoster = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
+
+            if (baseRoster.length === 0) {
+                baseList.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No players found.</p>`;
+                return;
+            }
+
             if (currentMode === "Overall") {
-                const overallData = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
-                if (overallData.length === 0) {
-                    rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No players found.</p>`;
-                    return;
-                }
-                overallData.forEach((player, index) => {
+                baseRoster.forEach((player, index) => {
                     const row = document.createElement("div");
                     row.className = "player-row";
                     let badgesHTML = '<div class="col-badges">';
@@ -523,23 +609,16 @@
                         : `<div class="player-name">${player.name}</div>`;
 
                     row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Total: ${player.totalPoints} pts</div></div></div>${badgesHTML}<div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
-                    rosterContainer.appendChild(row);
+                    baseList.appendChild(row);
                 });
             } else {
-                const distinctPlayers = getOverallLeaderboard().filter(p => p.name.toLowerCase().includes(searchQuery));
-                
-                const filteredPlayers = distinctPlayers.map(p => {
+                const filteredPlayers = baseRoster.map(p => {
                     const trackingRecord = playerData.find(record => record.name.toLowerCase() === p.name.toLowerCase() && record.mode === currentMode);
                     return {
                         name: p.name,
                         tier: trackingRecord ? trackingRecord.tier : "none"
                     };
                 }).sort((a, b) => (tierWeights[b.tier] || 0) - (tierWeights[a.tier] || 0));
-
-                if (filteredPlayers.length === 0) {
-                    rosterContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No ranked players found.</p>`;
-                    return;
-                }
                 
                 filteredPlayers.forEach((player, index) => {
                     const pts = tierWeights[player.tier] || 0;
@@ -551,14 +630,16 @@
                     const displayCell = (player.tier === "none" && !isAdminLoggedIn) ? `<div class="badge-placeholder"></div>` : cellContent;
 
                     row.innerHTML = `<div class="col-rank rank-number">#${index + 1}</div><div class="col-player"><img class="avatar" src="https://minotar.net/helm/${player.name}/44.png" onerror="this.src='https://minotar.net/helm/MHF_Question/44.png'"><div class="player-info">${nameDisplayHTML}<div class="points-sub">Score: ${pts} pts</div></div></div><div class="col-badges"><div class="tier-slot">${displayCell}</div></div><div class="col-actions" style="display: ${isAdminLoggedIn ? 'block' : 'none'}"><button class="btn btn-danger" style="padding: 4px 8px; font-size:0.75rem" onclick="removePlayerEntirely('${player.name}')">Delete</button></div>`;
-                    rosterContainer.appendChild(row);
+                    baseList.appendChild(row);
                 });
             }
         }
 
         function switchMode(modeName) {
             currentMode = modeName;
-            document.querySelectorAll(".tab-btn").forEach(btn => { btn.classList.toggle("active", btn.textContent.trim().toLowerCase() === modeName.toLowerCase()); });
+            document.querySelectorAll(".tab-btn").forEach(btn => { 
+                btn.classList.toggle("active", btn.textContent.trim().toLowerCase() === modeName.toLowerCase() || (modeName === "Test Rules" && btn.textContent.includes("Test Rules"))); 
+            });
             renderRoster();
         }
 
